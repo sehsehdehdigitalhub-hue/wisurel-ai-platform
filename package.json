@@ -1,0 +1,16 @@
+{
+  "name": "wisurel-ai-tests",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Smoke tests for the Wisurel AI platform — run before every deploy, or automatically via GitHub Actions on every push.",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:edge-functions": "bash scripts/check-edge-functions.sh",
+    "test:all": "npm test && npm run test:edge-functions"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "typescript": "^5.6.0"
+  }
+}

@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#07130D"/>
+<title>Wisurel AI — Admin</title>
+<link rel="icon" type="image/svg+xml" href="wisurel-logo.svg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#07130D;--bg2:#0C1E14;--bg3:#0F2718;--bgi:#0A1B12;
+  --b1:rgba(34,197,94,.14);--b2:rgba(34,197,94,.28);--b3:rgba(74,222,128,.55);
+  --v:#16A34A;--t:#4ADE80;--ro:#F59E0B;--am:#FBBF24;--gr:#10B981;--rd:#F43F5E;--bl:#3B82F6;
+  --aurora:linear-gradient(135deg,#166534,#22C55E,#4ADE80);
+  --wh:#F0EEFF;--mu:#7B7A9A;--fa:#322F52;
+  --sb:220px;--tb:56px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--wh);font-size:14px;-webkit-font-smoothing:antialiased;min-height:100vh}
+button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit}
+input{font-family:inherit;background:none;border:none;color:inherit;outline:none}
+.hidden{display:none!important}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px}
+
+.shell{display:flex;min-height:100vh}
+.sidebar{width:var(--sb);background:var(--bg2);border-right:.5px solid var(--b1);flex-shrink:0;display:flex;flex-direction:column;min-height:100vh}
+.sb-logo{display:flex;align-items:center;gap:9px;padding:0 16px;height:var(--tb);border-bottom:.5px solid var(--b1);flex-shrink:0}
+.sb-logo-img{height:30px;width:auto}
+.sb-badge{margin-left:auto;font-size:9.5px;font-weight:700;color:var(--am);background:rgba(251,191,36,.1);border:.5px solid rgba(251,191,36,.25);padding:2px 7px;border-radius:6px}
+.sb-sect{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--fa);text-transform:uppercase;padding:16px 16px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;width:100%;padding:9px 16px;font-size:13px;font-weight:600;color:var(--mu);text-align:left;border-left:2.5px solid transparent}
+.nav-item:hover{background:rgba(255,255,255,.02);color:var(--wh)}
+.nav-item.on{background:rgba(34,197,94,.08);color:var(--t);border-left-color:var(--v)}
+.nav-ic svg{display:block}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{height:var(--tb);border-bottom:.5px solid var(--b1);display:flex;align-items:center;padding:0 20px;flex-shrink:0}
+.topbar h2{font-size:14px;font-weight:700}
+.content{padding:22px;overflow-y:auto;flex:1}
+.page-hd h1{font-size:22px;font-weight:800;margin-bottom:4px}
+.page-hd p{font-size:12.5px;color:var(--mu)}
+
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}
+.stat-c{background:var(--bg2);border:.5px solid var(--b1);border-radius:13px;padding:16px}
+.stat-lbl{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mu)}
+.stat-val{font-size:26px;font-weight:800;font-family:'JetBrains Mono',monospace;margin-top:5px}
+.stat-sub{font-size:11px;color:var(--fa);margin-top:2px}
+
+.card{background:var(--bg2);border:.5px solid var(--b1);border-radius:13px;overflow:hidden;margin-bottom:16px}
+.card-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:.5px solid var(--b1)}
+.card-head h3{font-size:13px;font-weight:700}
+
+.utable{width:100%;border-collapse:collapse}
+.utable th{text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mu);padding:10px 16px;border-bottom:.5px solid var(--b1)}
+.utable td{padding:11px 16px;font-size:12.5px;border-bottom:.5px solid var(--b1)}
+.utable tr:last-child td{border-bottom:none}
+.role-chip{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(74,222,128,.1);color:var(--t);border:.5px solid rgba(74,222,128,.22);text-transform:capitalize}
+.status-dot{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600}
+.status-dot::before{content:'';width:7px;height:7px;border-radius:50%;background:#F43F5E}
+.status-dot.active::before{background:#10B981}
+.toggle-sw{width:36px;height:20px;border-radius:10px;background:var(--bgi);border:.5px solid var(--b2);position:relative;transition:background .15s}
+.toggle-sw.on{background:var(--v)}
+.toggle-sw::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .15s}
+.toggle-sw.on::after{transform:translateX(16px)}
+
+.abtn{background:var(--aurora);color:#04140a;font-weight:700;font-size:12.5px;padding:0 16px;height:36px;border-radius:9px}
+.abtn:hover{filter:brightness(1.08)}
+.sm-btn{background:rgba(255,255,255,.04);border:.5px solid var(--b2);border-radius:8px;padding:0 12px;height:34px;font-size:12px;font-weight:600;color:var(--wh)}
+.sm-btn:hover{background:rgba(255,255,255,.08)}
+
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - var(--tb) - 44px)}
+.chat-msgs{flex:1;overflow-y:auto;padding:6px}
+.chat-msg{max-width:78%;padding:11px 14px;border-radius:12px;font-size:13px;line-height:1.5;margin-bottom:10px}
+.chat-msg.user{background:var(--v);color:#04140a;margin-left:auto;border-bottom-right-radius:3px;font-weight:600}
+.chat-msg.bot{background:var(--bg2);border:.5px solid var(--b1);border-bottom-left-radius:3px}
+.chat-input-row{display:flex;gap:8px;padding-top:12px;border-top:.5px solid var(--b1)}
+.chat-input-row input{flex:1;background:var(--bg2);border:.5px solid var(--b2);border-radius:10px;padding:0 14px;height:42px;font-size:13px}
+.chat-suggest{display:inline-block;background:rgba(74,222,128,.07);border:.5px solid var(--b2);color:var(--t);font-size:11.5px;padding:5px 10px;border-radius:16px;margin:3px 4px 0 0}
+
+.gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.gate-box{width:100%;max-width:380px;background:var(--bg2);border:.5px solid var(--b2);border-radius:16px;padding:28px}
+.gate-box img{height:46px;display:block;margin:0 auto 20px}
+.gate-box label{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mu);display:block;margin-bottom:6px}
+.gate-box input{width:100%;background:var(--bgi);border:.5px solid var(--b2);border-radius:9px;padding:11px 13px;font-size:14px;margin-bottom:14px}
+.gate-box input:focus{border-color:var(--b3)}
+.gate-err{color:#FCA5A5;font-size:11.5px;margin-bottom:8px;min-height:14px}
+
+.demo-banner{background:rgba(251,191,36,.08);border:.5px solid rgba(251,191,36,.25);color:var(--am);font-size:11.5px;font-weight:600;padding:9px 14px;border-radius:9px;margin-bottom:16px}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <div class="gate-box">
+    <img src="wisurel-logo.svg" alt="Wisurel Ogbomosho Farm"/>
+
+    <!-- Shown when SB_URL/SB_ANON are configured: real Supabase auth + role check -->
+    <div id="gate-real" class="hidden">
+      <label>Email</label>
+      <input type="email" id="gate-email" placeholder="you@wisurel.com" onkeydown="if(event.key==='Enter')document.getElementById('gate-passreal').focus()"/>
+      <label>Password</label>
+      <input type="password" id="gate-passreal" placeholder="••••••••" onkeydown="if(event.key==='Enter')tryGateReal()"/>
+      <div class="gate-err" id="gate-err-real"></div>
+      <button class="abtn" style="width:100%" id="gate-real-btn" onclick="tryGateReal()">Sign in →</button>
+      <p style="font-size:10.5px;color:var(--fa);margin-top:12px;line-height:1.5">Access is restricted to accounts with an <code style="background:var(--bgi);padding:1px 4px;border-radius:4px">owner</code> or <code style="background:var(--bgi);padding:1px 4px;border-radius:4px">admin</code> role on the <code style="background:var(--bgi);padding:1px 4px;border-radius:4px">profiles</code> table.</p>
+    </div>
+
+    <!-- Shown when no backend is configured: passcode-only demo gate -->
+    <div id="gate-demo" class="hidden">
+      <label>Admin passcode</label>
+      <input type="password" id="gate-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')tryGate()"/>
+      <div class="gate-err" id="gate-err"></div>
+      <button class="abtn" style="width:100%" onclick="tryGate()">Enter admin portal →</button>
+      <p style="font-size:10.5px;color:var(--fa);margin-top:12px;line-height:1.5">Demo gate only — set <code style="background:var(--bgi);padding:1px 4px;border-radius:4px">ADMIN_PASSCODE</code> below before sharing this file. Configure <code style="background:var(--bgi);padding:1px 4px;border-radius:4px">SB_URL</code>/<code style="background:var(--bgi);padding:1px 4px;border-radius:4px">SB_ANON</code> to switch to real sign-in + role-based access instead.</p>
+    </div>
+  </div>
+</div>
+
+<div class="shell hidden" id="shell">
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <img src="wisurel-logo.svg" alt="Wisurel Ogbomosho Farm" class="sb-logo-img"/>
+      <span class="sb-badge">ADMIN</span>
+    </div>
+    <div class="sb-sect">Overview</div>
+    <button class="nav-item on" data-page="overview" onclick="navAdmin('overview',this)">
+      <span class="nav-ic"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="9" y="2" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="9" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="9" y="9" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      Global Dashboard
+    </button>
+    <div class="sb-sect">Manage</div>
+    <button class="nav-item" data-page="users" onclick="navAdmin('users',this)">
+      <span class="nav-ic"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M3 14c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+      User Management
+    </button>
+    <button class="nav-item" data-page="invites" onclick="navAdmin('invites',this)">
+      <span class="nav-ic"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4l6 4.5L14 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      Invite Codes
+    </button>
+    <button class="nav-item" data-page="analytics" onclick="navAdmin('analytics',this)">
+      <span class="nav-ic"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5l1.2 3.6L13 6.3 9.7 8 8 11.5 6.3 8 2.5 6.3 6.8 5.1 8 1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></span>
+      AI Analytics
+    </button>
+    <div class="sb-sect" style="margin-top:auto"></div>
+    <div style="padding:16px">
+      <a href="app.html" class="sm-btn" style="display:block;text-align:center;text-decoration:none">← Back to app</a>
+      <button class="sm-btn hidden" id="admin-signout" style="display:block;width:100%;text-align:center;margin-top:8px" onclick="adminSignOut()">Sign out</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar"><h2 id="admin-title">Global Dashboard</h2></div>
+    <div class="content">
+
+      <div id="page-overview">
+        <div class="page-hd"><h1>Global Dashboard</h1><p>Everything running across your Wisurel AI workspace, in one place.</p></div>
+        <div id="overview-banner"></div>
+        <div class="stats-grid">
+          <div class="stat-c"><div class="stat-lbl">Total Projects Active</div><div class="stat-val" id="st-projects" style="color:var(--t)">—</div><div class="stat-sub">automations + receipt processor</div></div>
+          <div class="stat-c"><div class="stat-lbl">Total API Usage</div><div class="stat-val" id="st-tokens" style="color:var(--am)">—</div><div class="stat-sub">tokens, all time</div></div>
+          <div class="stat-c"><div class="stat-lbl">Total Files Processed</div><div class="stat-val" id="st-files" style="color:var(--bl)">—</div><div class="stat-sub">receipts + reports</div></div>
+          <div class="stat-c"><div class="stat-lbl">Active Staff</div><div class="stat-val" id="st-users" style="color:#10B981">—</div><div class="stat-sub">of total accounts</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Usage over time</h3></div>
+          <div style="padding:16px" id="usage-chart"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Job queue health</h3></div>
+          <div style="padding:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px" id="queue-health"></div>
+        </div>
+      </div>
+
+      <div id="page-users" class="hidden">
+        <div class="page-hd"><h1>User Management</h1><p>Everyone with access to the Wisurel AI workspace.</p></div>
+        <div id="users-banner"></div>
+        <div class="card">
+          <table class="utable">
+            <thead><tr><th>Name</th><th>Role</th><th>Status</th><th>Joined</th><th></th></tr></thead>
+            <tbody id="users-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="page-invites" class="hidden">
+        <div class="page-hd" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px">
+          <div>
+            <h1>Invite Codes</h1>
+            <p>Signup is invite-only. Generate a code and share it with whoever you want to give access.</p>
+          </div>
+        </div>
+        <div id="invites-banner"></div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-head"><h3>Generate a new code</h3></div>
+          <div style="padding:16px;display:grid;grid-template-columns:1.3fr 1fr 90px 90px 100px;gap:8px;align-items:end">
+            <div><label style="font-size:10.5px;color:var(--mu);display:block;margin-bottom:5px">Label</label>
+              <input type="text" id="inv-label" placeholder="e.g. September staff onboarding" style="width:100%;background:var(--bgi);border:.5px solid var(--b2);border-radius:8px;padding:9px 11px;font-size:12.5px;color:var(--wh)"/></div>
+            <div><label style="font-size:10.5px;color:var(--mu);display:block;margin-bottom:5px">Role granted</label>
+              <select id="inv-role" style="width:100%;background:var(--bgi);border:.5px solid var(--b2);border-radius:8px;padding:9px 11px;font-size:12.5px;color:var(--wh);height:38px">
+                <option value="member">Member</option>
+                <option value="admin">Admin</option>
+                <option value="owner">Owner</option>
+              </select></div>
+            <div><label style="font-size:10.5px;color:var(--mu);display:block;margin-bottom:5px">Max uses</label>
+              <input type="number" id="inv-uses" value="1" min="1" style="width:100%;background:var(--bgi);border:.5px solid var(--b2);border-radius:8px;padding:9px 11px;font-size:12.5px;color:var(--wh)"/></div>
+            <div><label style="font-size:10.5px;color:var(--mu);display:block;margin-bottom:5px">Expires (days)</label>
+              <input type="number" id="inv-expires" placeholder="never" min="1" style="width:100%;background:var(--bgi);border:.5px solid var(--b2);border-radius:8px;padding:9px 11px;font-size:12.5px;color:var(--wh)"/></div>
+            <button class="abtn" style="height:38px" onclick="generateInviteCode()">+ Generate</button>
+          </div>
+        </div>
+        <div class="card">
+          <table class="utable">
+            <thead><tr><th>Code</th><th>Label</th><th>Role</th><th>Uses</th><th>Expires</th><th></th></tr></thead>
+            <tbody id="invites-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="page-analytics" class="hidden">
+        <div class="page-hd"><h1>AI Analytics</h1><p>Ask questions about usage, cost, and activity in plain English.</p></div>
+        <div id="analytics-banner"></div>
+        <div class="chat-wrap">
+          <div class="chat-msgs" id="an-msgs">
+            <div class="chat-msg bot">
+              Ask me things like:
+              <div style="margin-top:8px">
+                <span class="chat-suggest" onclick="askAnalytics('Which project used the most tokens this month?')">Which project used the most tokens this month?</span>
+                <span class="chat-suggest" onclick="askAnalytics('How many files were processed this week?')">How many files were processed this week?</span>
+                <span class="chat-suggest" onclick="askAnalytics('Summarize overall usage trends')">Summarize overall usage trends</span>
+              </div>
+            </div>
+          </div>
+          <div class="chat-input-row">
+            <input id="an-input" placeholder="Ask about usage, costs, or activity…" onkeydown="if(event.key==='Enter')sendAnalyticsQ()"/>
+            <button class="abtn" onclick="sendAnalyticsQ()">Ask</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL  = 'https://YOUR_PROJECT_REF.supabase.co';
+const SB_ANON = 'YOUR_SUPABASE_ANON_KEY';
+const AI_PROXY_URL = ''; // e.g. 'https://YOUR_PROJECT_REF.functions.supabase.co/ai-proxy'
+const ORG_ID = '';
+const ADMIN_PASSCODE = 'wisurel2026'; // only used in demo mode — change before sharing the file
+
+let SB=null, DEMO=true;
+const BACKEND_CONFIGURED=!SB_URL.includes('YOUR_PROJECT');
+
+// Show the right gate form as soon as the page loads — real sign-in when a
+// backend is configured, passcode-only otherwise. Also create the Supabase
+// client early (needed here, not just after gating) so tryGateReal() can use it.
+(function initGateMode(){
+  if(BACKEND_CONFIGURED){
+    const{createClient}=supabase;
+    SB=createClient(SB_URL,SB_ANON);
+    document.getElementById('gate-real').classList.remove('hidden');
+  }else{
+    document.getElementById('gate-demo').classList.remove('hidden');
+  }
+})();
+
+function tryGate(){
+  const val=document.getElementById('gate-pass').value;
+  const err=document.getElementById('gate-err');
+  if(val!==ADMIN_PASSCODE){err.textContent='Incorrect passcode.';return;}
+  err.textContent='';
+  enterShell();
+}
+
+async function tryGateReal(){
+  const email=document.getElementById('gate-email').value.trim();
+  const pass=document.getElementById('gate-passreal').value;
+  const err=document.getElementById('gate-err-real');
+  const btn=document.getElementById('gate-real-btn');
+  err.textContent='';
+  if(!email||!pass){err.textContent='Enter both email and password.';return;}
+  btn.disabled=true;btn.textContent='Signing in…';
+  try{
+    const{data,error}=await SB.auth.signInWithPassword({email,password:pass});
+    if(error)throw error;
+    // Role check — only owner/admin may enter. This relies on the profiles
+    // RLS policy in schema.sql letting a signed-in user read their own row.
+    const{data:profile,error:pErr}=await SB.from('profiles').select('role,org_id').eq('id',data.user.id).single();
+    if(pErr||!profile)throw new Error('No profile found for this account.');
+    if(!['owner','admin'].includes(profile.role)){
+      await SB.auth.signOut();
+      throw new Error('This account does not have admin access.');
+    }
+    DEMO=false;
+    enterShell();
+  }catch(e){
+    err.textContent=e.message||'Sign-in failed.';
+  }finally{
+    btn.disabled=false;btn.textContent='Sign in →';
+  }
+}
+
+function enterShell(){
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('shell').classList.remove('hidden');
+  initAdmin();
+}
+
+async function initAdmin(){
+  const banners=document.querySelectorAll('#overview-banner,#users-banner,#invites-banner,#analytics-banner');
+  if(DEMO){
+    banners.forEach(b=>b.innerHTML='<div class="demo-banner">⚠ Demo data shown below — connect Supabase (set SB_URL/SB_ANON at the top of this file) to see real numbers.</div>');
+  }else{
+    document.getElementById('admin-signout').classList.remove('hidden');
+  }
+  loadOverview();
+  loadUsers();
+}
+
+async function adminSignOut(){
+  if(SB)await SB.auth.signOut();
+  location.reload();
+}
+
+function navAdmin(page,btn){
+  document.querySelectorAll('#page-overview,#page-users,#page-invites,#page-analytics').forEach(el=>el.classList.add('hidden'));
+  document.getElementById('page-'+page).classList.remove('hidden');
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll(`[data-page="${page}"]`).forEach(b=>b.classList.add('on'));
+  document.getElementById('admin-title').textContent={overview:'Global Dashboard',users:'User Management',invites:'Invite Codes',analytics:'AI Analytics'}[page];
+  if(page==='invites')loadInvites();
+}
+
+async function loadOverview(){
+  let projects=0,tokens=0,files=0,activeUsers=0,totalUsers=0,queueStats={pending:0,running:0,done:0,failed:0};
+  if(!DEMO){
+    try{
+      const[{count:pc},{data:usage},{count:fc},{data:profiles},{data:jobs}]=await Promise.all([
+        SB.from('projects').select('*',{count:'exact',head:true}).eq('org_id',ORG_ID),
+        SB.from('usage_events').select('input_tokens,output_tokens').eq('org_id',ORG_ID),
+        SB.from('files').select('*',{count:'exact',head:true}).eq('org_id',ORG_ID),
+        SB.from('profiles').select('is_active').eq('org_id',ORG_ID),
+        SB.from('jobs').select('status').eq('org_id',ORG_ID)
+      ]);
+      projects=pc||0;
+      tokens=(usage||[]).reduce((s,u)=>s+(u.input_tokens||0)+(u.output_tokens||0),0);
+      files=fc||0;
+      totalUsers=(profiles||[]).length;
+      activeUsers=(profiles||[]).filter(p=>p.is_active).length;
+      (jobs||[]).forEach(j=>queueStats[j.status]=(queueStats[j.status]||0)+1);
+    }catch(e){console.error(e);}
+  }else{
+    projects=2;tokens=0;files=0;activeUsers=1;totalUsers=1;
+    queueStats={pending:0,running:0,done:0,failed:0};
+  }
+  document.getElementById('st-projects').textContent=projects;
+  document.getElementById('st-tokens').textContent=tokens.toLocaleString('en-US');
+  document.getElementById('st-files').textContent=files;
+  document.getElementById('st-users').textContent=`${activeUsers}/${totalUsers}`;
+
+  const qh=document.getElementById('queue-health');
+  const items=[['Pending',queueStats.pending||0,'var(--am)'],['Running',queueStats.running||0,'var(--t)'],['Done',queueStats.done||0,'#10B981'],['Failed',queueStats.failed||0,'#F43F5E']];
+  qh.innerHTML=items.map(([l,v,c])=>`<div style="text-align:center;padding:12px;background:var(--bgi);border-radius:10px"><div style="font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace;color:${c}">${v}</div><div style="font-size:10.5px;color:var(--mu);margin-top:2px">${l}</div></div>`).join('');
+
+  document.getElementById('usage-chart').innerHTML=tokens?`<div style="font-size:12px;color:var(--mu)">Token usage tracked — ${tokens.toLocaleString()} total. Full time-series charting can be added once you have a few weeks of usage_events data to plot.</div>`:'<div style="text-align:center;padding:1.5rem;color:var(--mu);font-size:12px">No usage recorded yet — this fills in automatically as staff use the app.</div>';
+}
+
+async function loadUsers(){
+  const body=document.getElementById('users-body');
+  let rows=[];
+  if(!DEMO){
+    try{
+      const{data}=await SB.from('profiles').select('*').eq('org_id',ORG_ID).order('created_at',{ascending:false});
+      rows=data||[];
+    }catch(e){console.error(e);}
+  }else{
+    rows=[{id:'demo1',full_name:'Wisurel Ogbomosho Farm (you)',role:'owner',is_active:true,created_at:new Date().toISOString()}];
+  }
+  body.innerHTML=rows.length?rows.map(u=>`
+    <tr>
+      <td style="font-weight:600">${u.full_name||'Unnamed'}</td>
+      <td><span class="role-chip">${u.role||'member'}</span></td>
+      <td><span class="status-dot ${u.is_active?'active':''}">${u.is_active?'Active':'Inactive'}</span></td>
+      <td style="color:var(--mu)">${new Date(u.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</td>
+      <td><div class="toggle-sw ${u.is_active?'on':''}" onclick="toggleUser('${u.id}',${!u.is_active})" style="cursor:pointer"></div></td>
+    </tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--mu)">No users found</td></tr>';
+}
+
+async function toggleUser(id,newState){
+  if(DEMO){alert('Connect Supabase to manage real users — this is demo data.');return;}
+  await SB.from('profiles').update({is_active:newState}).eq('id',id);
+  loadUsers();
+}
+
+/* ══════════════════════════════════════════
+   INVITE CODES
+══════════════════════════════════════════ */
+function randomCode(){
+  const words=['WISUREL','FARM','TEAM','STAFF','OGBOMOSHO'];
+  const word=words[Math.floor(Math.random()*words.length)];
+  const suffix=Math.random().toString(36).slice(2,8).toUpperCase();
+  return `${word}-${suffix}`;
+}
+
+async function loadInvites(){
+  const body=document.getElementById('invites-body');
+  let rows=[];
+  if(!DEMO){
+    try{
+      const{data}=await SB.from('invite_codes').select('*').eq('org_id',ORG_ID).order('created_at',{ascending:false});
+      rows=data||[];
+    }catch(e){console.error(e);}
+  }else{
+    rows=JSON.parse(localStorage.getItem('admin_demo_invites')||'[]');
+  }
+  body.innerHTML=rows.length?rows.map(c=>{
+    const expired=c.expires_at&&new Date(c.expires_at)<new Date();
+    const exhausted=c.used_count>=c.max_uses;
+    const statusColor=expired||exhausted?'#F43F5E':'#10B981';
+    const statusText=expired?'Expired':exhausted?'Used up':'Active';
+    return `<tr>
+      <td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--t)">${c.code}</td>
+      <td>${c.label||'—'}</td>
+      <td><span class="role-chip">${c.role}</span></td>
+      <td>${c.used_count}/${c.max_uses} <span style="color:${statusColor};font-weight:700;margin-left:6px">${statusText}</span></td>
+      <td style="color:var(--mu)">${c.expires_at?new Date(c.expires_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'Never'}</td>
+      <td><button class="sm-btn" style="height:28px;padding:0 10px;font-size:11px" onclick="copyInviteCode('${c.code}')">Copy</button></td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--mu)">No invite codes yet — generate one above.</td></tr>';
+}
+
+async function generateInviteCode(){
+  const label=document.getElementById('inv-label').value.trim();
+  const role=document.getElementById('inv-role').value;
+  const maxUses=parseInt(document.getElementById('inv-uses').value)||1;
+  const expiresDays=document.getElementById('inv-expires').value;
+  const code=randomCode();
+  const expiresAt=expiresDays?new Date(Date.now()+parseInt(expiresDays)*86400000).toISOString():null;
+
+  if(!DEMO){
+    const{error}=await SB.from('invite_codes').insert({
+      org_id:ORG_ID,code,role,max_uses:maxUses,label:label||null,expires_at:expiresAt
+    });
+    if(error){alert('Could not generate code: '+error.message);return;}
+  }else{
+    const rows=JSON.parse(localStorage.getItem('admin_demo_invites')||'[]');
+    rows.unshift({code,role,max_uses:maxUses,used_count:0,label,expires_at:expiresAt,created_at:new Date().toISOString()});
+    localStorage.setItem('admin_demo_invites',JSON.stringify(rows));
+  }
+  document.getElementById('inv-label').value='';
+  document.getElementById('inv-expires').value='';
+  await loadInvites();
+  copyInviteCode(code);
+}
+
+function copyInviteCode(code){
+  if(navigator.clipboard)navigator.clipboard.writeText(code).catch(()=>{});
+  const banner=document.getElementById('invites-banner');
+  banner.innerHTML=`<div class="demo-banner" style="color:var(--t);background:rgba(74,222,128,.08);border-color:rgba(74,222,128,.25)">✓ Code "${code}" copied to clipboard — share it with whoever you're inviting.</div>`;
+  setTimeout(()=>{if(!DEMO)banner.innerHTML='';},4000);
+}
+
+function askAnalytics(q){document.getElementById('an-input').value=q;sendAnalyticsQ();}
+
+async function sendAnalyticsQ(){
+  const input=document.getElementById('an-input');
+  const q=input.value.trim();if(!q)return;
+  const msgs=document.getElementById('an-msgs');
+  msgs.innerHTML+=`<div class="chat-msg user">${q}</div>`;
+  input.value='';
+  msgs.scrollTop=msgs.scrollHeight;
+  const thinkingId='think'+Date.now();
+  msgs.innerHTML+=`<div class="chat-msg bot" id="${thinkingId}"><span style="opacity:.6">Checking the numbers…</span></div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+
+  try{
+    let answer;
+    if(DEMO){
+      answer=`This is demo data, so there's nothing to analyze yet — connect Supabase (set SB_URL/SB_ANON at the top of this file) and this'll query your real usage_events, projects, and files tables.`;
+    }else if(!AI_PROXY_URL){
+      answer='Set AI_PROXY_URL at the top of this file to enable natural-language answers — I can still show raw numbers on the Global Dashboard tab in the meantime.';
+    }else{
+      const[{data:usage},{data:projects},{data:files}]=await Promise.all([
+        SB.from('usage_events').select('*,projects(name)').eq('org_id',ORG_ID).order('created_at',{ascending:false}).limit(500),
+        SB.from('projects').select('id,name,created_at').eq('org_id',ORG_ID),
+        SB.from('files').select('status,created_at').eq('org_id',ORG_ID)
+      ]);
+      const system=`You are an analytics assistant for a business automation admin panel. You're given raw
+usage data as JSON. Answer the admin's question using ONLY this data — if it doesn't contain the
+answer, say so plainly rather than guessing. Be concise (2-4 sentences), use real numbers from the data.`;
+      const dataBlob=JSON.stringify({usage_events:usage,projects,files}).slice(0,8000);
+      const res=await fetch(AI_PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'raw',system,org_id:ORG_ID,content:[{type:'text',text:`Data: ${dataBlob}\n\nQuestion: ${q}`}],max_tokens:400})});
+      const data=await res.json();
+      answer=data.text||'Could not get an answer.';
+    }
+    document.getElementById(thinkingId).innerHTML=answer;
+  }catch(e){
+    document.getElementById(thinkingId).innerHTML='Error: '+e.message;
+  }
+  msgs.scrollTop=msgs.scrollHeight;
+}
+</script>
+</body>
+</html>
